@@ -1,0 +1,32 @@
+[
+  {
+    "city": "Campinas",
+    "country": "BR",
+    "lat": -22.9056391,
+    "lon": -47.059564
+  },
+  {
+    "city": "São Paulo",
+    "country": "BR",
+    "lat": -23.5505,
+    "lon": -46.6333
+  },
+  {
+    "city": "São Luís",
+    "country": "BR",
+    "lat": -2.5295265,
+    "lon": -44.2963942
+  },
+  {
+    "city": "Guarapari",
+    "country": "BR",
+    "lat": -20.6718755,
+    "lon": -40.4984617
+  },
+  {
+    "city": "Ubatuba",
+    "country": "BR",
+    "lat": -23.433162,
+    "lon": -45.083415
+  }
+]

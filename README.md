@@ -12,7 +12,7 @@ This project implements a scheduled ETL pipeline that:
 - Provides alerting for anomalies
 
 **Tech Stack:**
-- Apache Airflow 2.10.4 (workflow orchestration)
+- Apache Airflow 3.1.3 (workflow orchestration)
 - PostgreSQL (data warehouse)
 - Docker Compose (containerization)
 - Python 3.13
@@ -20,7 +20,7 @@ This project implements a scheduled ETL pipeline that:
 ## Setup Instructions
 
 ### Prerequisites
-- Python 3.12+ installed
+- Python 3.13 installed
 - Docker and Docker Compose
 - OpenWeatherMap API key (free tier)
 
@@ -63,13 +63,20 @@ docker-compose up -d
 
 ```
 orchestrated-pipeline-airflow/
-├── dags/                    # Airflow DAG definitions
-├── plugins/                 # Custom Airflow plugins
-├── scripts/                 # Utility scripts
-├── tests/                   # Unit and integration tests
-├── docker-compose.yml       # Docker services configuration
-├── requirements.txt         # Python dependencies
-└── README.md                # This file
+├── dags/                  # Airflow DAG definitions
+│   └── tasks/             # Task implementation modules
+├── plugins/               # Custom Airflow plugins
+│   ├── operators/         # Custom operators
+│   └── sensors/           # Custom sensors
+├── config/                # Configuration files
+│   └── locations.json     # Cities to track (5 cities currently)
+├── sql/                   # Database schema scripts
+├── tests/                 # Unit and integration tests
+├── docs/                  # Project documentation
+├── logs/                  # Airflow logs (local development)
+├── requirements.txt       # Python dependencies
+├── .env.example           # Environment variables template
+└── README.md              # This file
 ```
 
 ## Usage
