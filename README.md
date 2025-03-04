@@ -52,6 +52,7 @@ cp .env.example .env
 # Edit .env with your credentials
 # - OpenWeatherMap API key
 # - Database credentials
+# - Airflow admin credentials
 ```
 
 4. **Start Airflow services**
