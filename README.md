@@ -57,7 +57,63 @@ cp .env.example .env
 
 4. **Start Airflow services**
 ```bash
-docker-compose up -d
+docker compose up -d
+```
+
+5. **Verify services are running**
+```bash
+# Check all container status
+docker compose ps
+
+# View logs for a specific service
+docker compose logs airflow-scheduler
+
+# Check Airflow init completed successfully
+docker compose logs airflow-init | tail -20
+```
+
+## Useful Docker Commands
+
+### Service Management
+```bash
+# Start all services
+docker compose up -d
+
+# Stop all services
+docker compose down
+
+# Restart a specific service
+docker compose restart airflow-scheduler
+
+# View real-time logs
+docker compose logs -f
+```
+
+### Database Verification
+```bash
+# Check Airflow metadata tables
+docker compose exec postgres psql -U airflow -d airflow -c "SELECT tablename FROM pg_tables WHERE schemaname = 'public' LIMIT 10;"
+
+# Test weather_data database connection
+docker compose exec postgres psql -U weather_user -d weather_data -c "SELECT 1 as connection_test;"
+
+# Interactive PostgreSQL shell
+docker compose exec postgres psql -U airflow -d airflow
+```
+
+### Troubleshooting
+```bash
+# Check container health
+docker compose ps
+
+# View detailed logs for init process
+docker compose logs airflow-init
+
+# Check for errors in scheduler
+docker compose logs airflow-scheduler | grep -i error
+
+# Restart everything from scratch
+docker compose down -v && docker compose up -d
 ```
 
 ## Project Structure
