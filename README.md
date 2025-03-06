@@ -72,6 +72,11 @@ docker compose logs airflow-scheduler
 docker compose logs airflow-init | tail -20
 ```
 
+6. **Access Airflow UI**
+- Open http://localhost:8080
+- Login with credentials from `.env` (default: airflow/airflow)
+- See [docs/setup.md](docs/setup.md) for detailed setup and troubleshooting
+
 ## Useful Docker Commands
 
 ### Service Management
