@@ -109,3 +109,57 @@ docker compose exec postgres pg_isready
 4. Restrict network access to the webserver port
 
 For this portfolio project, default credentials are acceptable for local development.
+
+## Configuring API Connections
+
+The weather pipeline needs access to the OpenWeatherMap API. You can configure this via script or manually through the UI.
+
+### Option 1: Using the Setup Script (Recommended)
+
+1. Ensure your `.env` file has a valid `OPENWEATHER_API_KEY`
+
+2. Run the setup script inside the Airflow scheduler container:
+```bash
+docker compose exec airflow-scheduler python /opt/airflow/scripts/setup_connections.py
+```
+
+This creates:
+- **Connection:** `openweathermap_api` - HTTP connection to api.openweathermap.org
+- **Variable:** `weather_api_base_url` - Base URL for API endpoints
+- **Variable:** `weather_api_rate_limit` - Maximum calls per minute
+
+### Option 2: Manual Setup via UI
+
+#### Create the Connection
+
+1. Go to **Admin > Connections**
+2. Click **+** to add a new connection
+3. Fill in the fields:
+   - **Connection Id:** `openweathermap_api`
+   - **Connection Type:** HTTP
+   - **Host:** `api.openweathermap.org`
+   - **Schema:** `https`
+   - **Extra:** `{"api_key": "YOUR_API_KEY_HERE"}`
+4. Click **Save**
+
+#### Create Variables
+
+1. Go to **Admin > Variables**
+2. Click **+** to add each variable:
+
+| Key | Value |
+|-----|-------|
+| `weather_api_base_url` | `https://api.openweathermap.org/data/2.5` |
+| `weather_api_rate_limit` | `60` |
+
+### Verifying the Setup
+
+After configuration, verify in Airflow UI:
+- **Admin > Connections** - Should show `openweathermap_api`
+- **Admin > Variables** - Should show `weather_api_base_url` and `weather_api_rate_limit`
+
+You can also test from the CLI:
+```bash
+docker compose exec airflow-scheduler airflow connections get openweathermap_api
+docker compose exec airflow-scheduler airflow variables get weather_api_base_url
+```
