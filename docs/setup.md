@@ -125,12 +125,13 @@ docker compose exec airflow-scheduler python /opt/airflow/scripts/setup_connecti
 
 This creates:
 - **Connection:** `openweathermap_api` - HTTP connection to api.openweathermap.org
+- **Connection:** `weather_postgres` - PostgreSQL connection for weather data
 - **Variable:** `weather_api_base_url` - Base URL for API endpoints
 - **Variable:** `weather_api_rate_limit` - Maximum calls per minute
 
 ### Option 2: Manual Setup via UI
 
-#### Create the Connection
+#### Create the OpenWeatherMap Connection
 
 1. Go to **Admin > Connections**
 2. Click **+** to add a new connection
@@ -141,6 +142,22 @@ This creates:
    - **Schema:** `https`
    - **Extra:** `{"api_key": "YOUR_API_KEY_HERE"}`
 4. Click **Save**
+
+#### Create the PostgreSQL Connection
+
+1. Go to **Admin > Connections**
+2. Click **+** to add a new connection
+3. Fill in the fields:
+   - **Connection Id:** `weather_postgres`
+   - **Connection Type:** Postgres
+   - **Host:** `postgres`
+   - **Schema:** `weather_data`
+   - **Login:** `weather_user`
+   - **Password:** Your `WEATHER_DB_PASSWORD` from `.env`
+   - **Port:** `5432`
+4. Click **Save**
+
+**Note:** This connection is for the weather data database, not the Airflow metadata database. The host is `postgres` because that's the Docker service name within the container network.
 
 #### Create Variables
 
@@ -155,11 +172,17 @@ This creates:
 ### Verifying the Setup
 
 After configuration, verify in Airflow UI:
-- **Admin > Connections** - Should show `openweathermap_api`
+- **Admin > Connections** - Should show `openweathermap_api` and `weather_postgres`
 - **Admin > Variables** - Should show `weather_api_base_url` and `weather_api_rate_limit`
 
 You can also test from the CLI:
 ```bash
 docker compose exec airflow-scheduler airflow connections get openweathermap_api
+docker compose exec airflow-scheduler airflow connections get weather_postgres
 docker compose exec airflow-scheduler airflow variables get weather_api_base_url
+```
+
+To test the PostgreSQL connection works:
+```bash
+docker compose exec airflow-scheduler airflow connections test weather_postgres
 ```

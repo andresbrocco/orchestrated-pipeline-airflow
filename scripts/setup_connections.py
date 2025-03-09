@@ -15,7 +15,7 @@ def run_airflow_cmd(cmd):
     return True
 
 
-def setup_connection():
+def setup_openweathermap_connection():
     """Create the OpenWeatherMap API connection."""
     api_key = os.environ.get('OPENWEATHER_API_KEY', '')
 
@@ -45,6 +45,40 @@ def setup_connection():
     return False
 
 
+def setup_postgres_connection():
+    """Create the PostgreSQL connection for weather data."""
+    db_name = os.environ.get('WEATHER_DB_NAME', 'weather_data')
+    db_user = os.environ.get('WEATHER_DB_USER', 'weather_user')
+    db_password = os.environ.get('WEATHER_DB_PASSWORD', '')
+
+    if not db_password:
+        print("Warning: WEATHER_DB_PASSWORD not set")
+        print("Set it in your .env file before running this script")
+        return False
+
+    # Delete existing connection if it exists
+    subprocess.run(
+        "airflow connections delete weather_postgres 2>/dev/null",
+        shell=True,
+        capture_output=True
+    )
+
+    # Create Postgres connection for weather data
+    cmd = f'''airflow connections add weather_postgres \
+        --conn-type postgres \
+        --conn-host postgres \
+        --conn-port 5432 \
+        --conn-schema {db_name} \
+        --conn-login {db_user} \
+        --conn-password {db_password}
+    '''
+
+    if run_airflow_cmd(cmd):
+        print("Created connection: weather_postgres")
+        return True
+    return False
+
+
 def setup_variables():
     """Create Airflow variables for weather API configuration."""
     variables = {
@@ -67,11 +101,12 @@ def main():
     print("Setting up Airflow connections and variables...")
     print("-" * 50)
 
-    conn_ok = setup_connection()
+    api_conn_ok = setup_openweathermap_connection()
+    pg_conn_ok = setup_postgres_connection()
     var_ok = setup_variables()
 
     print("-" * 50)
-    if conn_ok and var_ok:
+    if api_conn_ok and pg_conn_ok and var_ok:
         print("Setup completed successfully!")
         print("\nVerify in Airflow UI:")
         print("  - Connections: Admin > Connections")
