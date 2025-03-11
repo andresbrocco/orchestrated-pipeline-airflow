@@ -186,3 +186,37 @@ To test the PostgreSQL connection works:
 ```bash
 docker compose exec airflow-scheduler airflow connections test weather_postgres
 ```
+
+## Testing the Database Initialization DAG
+
+The `db_init` DAG creates the database schema and populates initial locations.
+
+### Trigger the DAG
+
+```bash
+docker compose exec airflow-scheduler airflow dags trigger db_init
+```
+
+### Check Run Status
+
+```bash
+docker compose exec airflow-scheduler airflow dags list-runs db_init
+```
+
+Expected output shows `state = success`.
+
+### Verify Database Tables
+
+```bash
+docker compose exec postgres psql -U weather_user -d weather_data -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public';"
+```
+
+Expected tables: `locations`, `weather_observations`, `weather_forecasts`
+
+### Verify Locations
+
+```bash
+docker compose exec postgres psql -U weather_user -d weather_data -c "SELECT id, city_name, country_code FROM locations;"
+```
+
+Expected: 5 Brazilian cities (Campinas, São Paulo, São Luís, Guarapari, Ubatuba)

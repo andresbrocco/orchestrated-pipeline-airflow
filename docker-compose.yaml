@@ -300,6 +300,10 @@ services:
         echo "Files in shared volumes:"
         echo
         ls -la /opt/airflow/{logs,dags,plugins,config}
+        echo
+        echo "Setting up Airflow connections and variables..."
+        echo
+        /entrypoint python /opt/airflow/scripts/setup_connections.py
 
     # yamllint enable rule:line-length
     environment:
