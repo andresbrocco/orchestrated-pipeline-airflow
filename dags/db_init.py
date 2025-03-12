@@ -1,17 +1,22 @@
 """Database initialization DAG - creates schema and populates initial locations."""
 
-import json
 import logging
+import sys
 from datetime import datetime
+from pathlib import Path
+
+# Add dags directory to path for local imports
+sys.path.insert(0, str(Path(__file__).parent))
 
 from airflow import DAG
 from airflow.providers.standard.operators.python import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
+from tasks.locations import load_locations_from_config
+
 logger = logging.getLogger(__name__)
 
 SQL_FILE_PATH = '/opt/airflow/sql/schema.sql'
-LOCATIONS_FILE_PATH = '/opt/airflow/config/locations.json'
 POSTGRES_CONN_ID = 'weather_postgres'
 
 
@@ -27,8 +32,10 @@ def create_schema():
 
 def populate_locations():
     """Insert initial locations from config file."""
-    with open(LOCATIONS_FILE_PATH, 'r') as f:
-        locations = json.load(f)
+    locations = load_locations_from_config()
+    if not locations:
+        logger.warning("No locations found in config")
+        return
 
     hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
 
