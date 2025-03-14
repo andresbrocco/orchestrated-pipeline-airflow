@@ -14,7 +14,8 @@ def transform_current_weather(api_response):
     """Transform current weather API response into database format."""
     main = api_response.get('main', {})
     wind = api_response.get('wind', {})
-    weather = api_response.get('weather', [{}])[0]
+    weather_list = api_response.get('weather', [])
+    weather = weather_list[0] if weather_list else {}
     clouds = api_response.get('clouds', {})
 
     return {
