@@ -9,6 +9,7 @@ from tasks.locations import get_locations_from_db
 from tasks.extract import fetch_weather_for_location
 from tasks.transform import transform_weather_data
 from tasks.load import load_weather_data
+from sensors.api_health_sensor import OpenWeatherMapHealthSensor
 
 
 default_args = {
@@ -77,6 +78,13 @@ with DAG(
     tags=['weather', 'etl'],
 ) as dag:
 
+    api_health_check = OpenWeatherMapHealthSensor(
+        task_id='check_api_health',
+        poke_interval=60,
+        timeout=300,
+        mode='poke',
+    )
+
     get_locations_task = PythonOperator(
         task_id='get_locations',
         python_callable=get_locations,
@@ -87,4 +95,4 @@ with DAG(
         python_callable=process_all_locations,
     )
 
-    get_locations_task >> process_locations_task
+    api_health_check >> get_locations_task >> process_locations_task
