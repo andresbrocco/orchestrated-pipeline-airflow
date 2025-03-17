@@ -4,8 +4,8 @@ import json
 import logging
 import requests
 
-from airflow.sensors.base import BaseSensorOperator
-from airflow.hooks.base import BaseHook
+from airflow.sdk.bases.sensor import BaseSensorOperator
+from airflow.sdk.bases.hook import BaseHook
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ import time
 import logging
 import requests
 
-from airflow.hooks.base import BaseHook
+from airflow.sdk.bases.hook import BaseHook
 
 logger = logging.getLogger(__name__)
 
