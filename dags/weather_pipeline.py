@@ -49,19 +49,56 @@ def load_data(transformed_data, **context):
     return result
 
 
-def process_all_locations(**context):
-    """Process weather data for all locations sequentially."""
+def extract_all_locations(**context):
+    """Extract weather data for all locations."""
     ti = context['ti']
     locations = ti.xcom_pull(key='locations', task_ids='get_locations')
 
-    results = []
+    extracted_data = []
     for location in locations:
-        raw_data = extract_weather_data(location)
-        transformed_data = transform_data(raw_data)
-        loaded = load_data(transformed_data)
+        raw_data = extract_weather_data(location, **context)
+        extracted_data.append({
+            'location_id': location['id'],
+            'city': location['city'],
+            'raw_data': raw_data
+        })
 
+    return extracted_data
+
+
+def transform_all_locations(**context):
+    """Transform weather data for all locations."""
+    ti = context['ti']
+    extracted_data = ti.xcom_pull(task_ids='extract_weather')
+
+    if not extracted_data:
+        raise ValueError('No data received from extract task')
+
+    transformed_data = []
+    for item in extracted_data:
+        transformed = transform_data(item['raw_data'], **context)
+        transformed_data.append({
+            'location_id': item['location_id'],
+            'city': item['city'],
+            'transformed': transformed
+        })
+
+    return transformed_data
+
+
+def load_all_locations(**context):
+    """Load weather data for all locations."""
+    ti = context['ti']
+    transformed_data = ti.xcom_pull(task_ids='transform_weather')
+
+    if not transformed_data:
+        raise ValueError('No data received from transform task')
+
+    results = []
+    for item in transformed_data:
+        loaded = load_data(item['transformed'], **context)
         results.append({
-            'location': location['city'],
+            'location': item['city'],
             'loaded': loaded
         })
 
@@ -90,9 +127,19 @@ with DAG(
         python_callable=get_locations,
     )
 
-    process_locations_task = PythonOperator(
-        task_id='process_all_locations',
-        python_callable=process_all_locations,
+    extract_task = PythonOperator(
+        task_id='extract_weather',
+        python_callable=extract_all_locations,
     )
 
-    api_health_check >> get_locations_task >> process_locations_task
+    transform_task = PythonOperator(
+        task_id='transform_weather',
+        python_callable=transform_all_locations,
+    )
+
+    load_task = PythonOperator(
+        task_id='load_weather',
+        python_callable=load_all_locations,
+    )
+
+    api_health_check >> get_locations_task >> extract_task >> transform_task >> load_task
