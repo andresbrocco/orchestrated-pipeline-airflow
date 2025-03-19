@@ -1,15 +1,19 @@
 """Main weather data ETL pipeline DAG."""
 
 from datetime import datetime, timedelta
+import logging
 
 from airflow import DAG
-from airflow.providers.standard.operators.python import PythonOperator
+from airflow.providers.standard.operators.python import PythonOperator, BranchPythonOperator
 
 from tasks.locations import get_locations_from_db
 from tasks.extract import fetch_weather_for_location
 from tasks.transform import transform_weather_data
 from tasks.load import load_weather_data
+from tasks.validate import check_data_quality
 from sensors.api_health_sensor import OpenWeatherMapHealthSensor
+
+logger = logging.getLogger(__name__)
 
 
 default_args = {
@@ -86,6 +90,39 @@ def transform_all_locations(**context):
     return transformed_data
 
 
+def check_quality(**context):
+    """Check data quality and decide next task."""
+    ti = context['ti']
+    transformed_data = ti.xcom_pull(task_ids='transform_weather')
+
+    if not transformed_data:
+        logger.warning('No data to check quality')
+        return 'quality_alert'
+
+    quality_ok = check_data_quality(transformed_data)
+
+    if quality_ok:
+        logger.info('Quality check passed, proceeding to load')
+        return 'load_weather'
+    else:
+        logger.warning('Quality check failed, skipping load')
+        return 'quality_alert'
+
+
+def quality_alert(**context):
+    """Alert on poor data quality."""
+    ti = context['ti']
+    transformed_data = ti.xcom_pull(task_ids='transform_weather')
+
+    logger.warning('Data quality alert: Issues detected in weather data')
+    logger.warning('Load task skipped due to quality concerns')
+
+    if transformed_data:
+        logger.warning(f'Affected locations: {len(transformed_data)}')
+
+    return 'quality_alert_sent'
+
+
 def load_all_locations(**context):
     """Load weather data for all locations."""
     ti = context['ti']
@@ -137,9 +174,20 @@ with DAG(
         python_callable=transform_all_locations,
     )
 
+    quality_check = BranchPythonOperator(
+        task_id='check_quality',
+        python_callable=check_quality,
+    )
+
     load_task = PythonOperator(
         task_id='load_weather',
         python_callable=load_all_locations,
     )
 
-    api_health_check >> get_locations_task >> extract_task >> transform_task >> load_task
+    alert_task = PythonOperator(
+        task_id='quality_alert',
+        python_callable=quality_alert,
+    )
+
+    api_health_check >> get_locations_task >> extract_task >> transform_task >> quality_check
+    quality_check >> [load_task, alert_task]
