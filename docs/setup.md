@@ -164,10 +164,10 @@ This creates:
 1. Go to **Admin > Variables**
 2. Click **+** to add each variable:
 
-| Key | Value |
-|-----|-------|
-| `weather_api_base_url` | `https://api.openweathermap.org/data/2.5` |
-| `weather_api_rate_limit` | `60` |
+| Key                      | Value                                     |
+| ------------------------ | ----------------------------------------- |
+| `weather_api_base_url`   | `https://api.openweathermap.org/data/2.5` |
+| `weather_api_rate_limit` | `60`                                      |
 
 ### Verifying the Setup
 
@@ -220,3 +220,71 @@ docker compose exec postgres psql -U weather_user -d weather_data -c "SELECT id,
 ```
 
 Expected: 5 Brazilian cities (Campinas, São Paulo, São Luís, Guarapari, Ubatuba)
+
+## Configuring Email Alerts (Optional)
+
+The DAG is configured to send email notifications on task failures. To enable email alerts, you need to configure SMTP settings.
+
+### Setting Up Email Alerts
+
+1. **Add SMTP configuration to your `.env` file:**
+
+The `.env.example` file includes SMTP configuration templates. Copy these settings to your `.env` file and update with your credentials:
+
+```bash
+AIRFLOW__SMTP__SMTP_HOST=smtp.gmail.com
+AIRFLOW__SMTP__SMTP_STARTTLS=True
+AIRFLOW__SMTP__SMTP_SSL=False
+AIRFLOW__SMTP__SMTP_PORT=587
+AIRFLOW__SMTP__SMTP_MAIL_FROM=your-email@example.com
+AIRFLOW__SMTP__SMTP_USER=your-email@example.com
+AIRFLOW__SMTP__SMTP_PASSWORD=your_app_password_here
+AIRFLOW_CONN_SMTP_DEFAULT=smtp://USERNAME:PASSWORD@HOST:PORT?secure=starttls # for gmail, use app_password
+```
+
+2. **For Gmail users:**
+   - Enable 2-factor authentication on your Google account
+   - Generate an App Password: https://myaccount.google.com/apppasswords
+   - Use the App Password (not your regular password) in `SMTP_PASSWORD`
+
+3. **Restart Airflow services:**
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+### Email Configuration Details
+
+The weather pipeline DAG includes:
+- **email_on_failure:** True - Sends email when tasks fail
+- **email_on_retry:** False - Does not send email on retries (reduces noise)
+- **email recipients:** Configured in DAG default_args
+
+### Without Email Configuration
+
+If you don't configure SMTP, the pipeline will still work normally. Failed tasks will:
+- Log errors via the `on_failure_callback` function
+- Show failure status in the Airflow UI
+- Not send email notifications
+
+The failure logging callback provides visibility without requiring email setup.
+
+### Testing Email Alerts
+
+To test email notifications:
+
+1. Temporarily modify a task to fail (e.g., raise an exception)
+2. Trigger the DAG
+3. Check your email inbox for failure notification
+4. Check Airflow logs for the custom failure callback output
+
+### Retry Policies
+
+The DAG includes different retry strategies for different task types:
+
+- **Extract tasks:** 5 retries with 3-minute initial delay (API calls may have transient failures)
+- **Transform tasks:** 2 retries with 2-minute delay, no exponential backoff
+- **Default (other tasks):** 3 retries with 5-minute initial delay, exponential backoff up to 30 minutes
+
+Exponential backoff doubles the wait time after each retry, helping handle temporary service disruptions.
