@@ -10,7 +10,7 @@ from airflow.providers.standard.operators.python import (
 )
 
 from tasks.locations import get_locations_from_db
-from tasks.extract import fetch_weather_for_location
+from tasks.extract import fetch_weather_for_location, get_api_metrics
 from tasks.transform import transform_weather_data
 from tasks.load import load_weather_data
 from tasks.validate import check_data_quality
@@ -91,6 +91,22 @@ def extract_all_locations(**context):
                 "raw_data": raw_data,
             }
         )
+
+    # Log API metrics summary
+    metrics = get_api_metrics()
+    logger.info("=== API Metrics Summary ===")
+    logger.info(f"Total API calls: {metrics['total_calls']}")
+    logger.info(f"Successful: {metrics['successful_calls']}, Failed: {metrics['failed_calls']}")
+    logger.info(f"Success rate: {metrics['success_rate']:.1f}%")
+    logger.info(f"Average response time: {metrics['avg_response_time']:.0f}ms")
+    logger.info(f"Slow calls (>2s): {metrics['slow_calls']}")
+
+    if metrics['rate_limits']:
+        latest_rate = metrics['rate_limits'][-1]
+        logger.info(f"Rate limit status: {latest_rate['remaining']}/{latest_rate['limit']} remaining")
+
+    # Store metrics in XCom for potential monitoring
+    ti.xcom_push(key="api_metrics", value=metrics)
 
     return extracted_data
 
