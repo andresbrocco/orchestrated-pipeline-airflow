@@ -14,6 +14,7 @@ from tasks.extract import fetch_weather_for_location, get_api_metrics
 from tasks.transform import transform_weather_data
 from tasks.load import load_weather_data
 from tasks.validate import check_data_quality
+from tasks.anomaly import check_anomalies
 from sensors.api_health_sensor import OpenWeatherMapHealthSensor
 
 logger = logging.getLogger(__name__)
@@ -96,14 +97,12 @@ def extract_all_locations(**context):
     metrics = get_api_metrics()
     logger.info("=== API Metrics Summary ===")
     logger.info(f"Total API calls: {metrics['total_calls']}")
-    logger.info(f"Successful: {metrics['successful_calls']}, Failed: {metrics['failed_calls']}")
+    logger.info(
+        f"Successful: {metrics['successful_calls']}, Failed: {metrics['failed_calls']}"
+    )
     logger.info(f"Success rate: {metrics['success_rate']:.1f}%")
     logger.info(f"Average response time: {metrics['avg_response_time']:.0f}ms")
     logger.info(f"Slow calls (>2s): {metrics['slow_calls']}")
-
-    if metrics['rate_limits']:
-        latest_rate = metrics['rate_limits'][-1]
-        logger.info(f"Rate limit status: {latest_rate['remaining']}/{latest_rate['limit']} remaining")
 
     # Store metrics in XCom for potential monitoring
     ti.xcom_push(key="api_metrics", value=metrics)
@@ -182,6 +181,11 @@ def load_all_locations(**context):
     return results
 
 
+def detect_anomalies(**context):
+    """Detect anomalies in loaded weather data."""
+    return check_anomalies(**context)
+
+
 with DAG(
     dag_id="weather_data_pipeline",
     default_args=default_args,
@@ -233,6 +237,12 @@ with DAG(
         python_callable=quality_alert,
     )
 
+    anomaly_detection = PythonOperator(
+        task_id="detect_anomalies",
+        python_callable=detect_anomalies,
+        trigger_rule="none_failed",
+    )
+
     (
         api_health_check
         >> get_locations_task
@@ -241,3 +251,4 @@ with DAG(
         >> quality_check
     )
     quality_check >> [load_task, alert_task]
+    load_task >> anomaly_detection
