@@ -6,6 +6,7 @@ A production-ready ETL pipeline demonstrating workflow orchestration with Apache
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=flat&logo=python)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-316192?style=flat&logo=postgresql)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker)
+![Metabase](https://img.shields.io/badge/Metabase-Analytics-2c3e50?style=flat)
 
 ## Overview
 
@@ -82,6 +83,12 @@ This portfolio project demonstrates practical data engineering skills by impleme
 - **Anomaly Detection**: Identifies unusual weather patterns
 - **Comprehensive Logging**: Detailed execution logs for debugging
 
+### Analytics & Visualization
+- **Metabase Integration**: Business intelligence dashboards
+- **SQL Query Support**: Direct database queries for analysis
+- **Data Exploration**: Interactive visualizations and filters
+- **Custom Dashboards**: Create your own weather analytics
+
 ## Technology Stack
 
 | Component        | Technology           | Purpose                             |
@@ -90,6 +97,7 @@ This portfolio project demonstrates practical data engineering skills by impleme
 | Executor         | CeleryExecutor       | Distributed task execution          |
 | Database         | PostgreSQL 16        | Data warehouse and Airflow metadata |
 | Message Broker   | Redis 7.2            | Celery task queue                   |
+| Analytics        | Metabase             | Business intelligence & dashboards  |
 | Containerization | Docker Compose       | Service orchestration               |
 | Language         | Python 3.13          | Pipeline implementation             |
 | Package Manager  | uv                   | Fast dependency management          |
@@ -121,6 +129,10 @@ orchestrated-pipeline-airflow/
 │   └── setup_connections.py    # Airflow connections setup
 ├── tests/                      # Unit and integration tests
 ├── docs/                       # Additional documentation
+│   ├── metabase.md             # Metabase analytics guide
+│   ├── setup.md                # Setup instructions
+│   ├── architecture.md         # System design
+│   └── troubleshooting.md      # Common issues
 ├── docker-compose.yaml         # Docker services configuration
 ├── .env.example                # Environment variables template
 ├── requirements.txt            # Python dependencies
@@ -210,6 +222,15 @@ docker compose ps
 3. Navigate to DAGs page
 4. Unpause the `weather_data_pipeline` DAG
 5. Trigger a manual run or wait for the hourly schedule
+
+### 7. Access Metabase Analytics
+
+1. Open your browser to [http://localhost:3000](http://localhost:3000)
+2. On first access, complete the setup wizard:
+   - Create admin account (credentials from `.env`)
+   - Connect to `weather_data` database (host: `postgres`)
+3. Explore pre-built dashboards or create your own
+4. See [docs/metabase.md](docs/metabase.md) for detailed documentation
 
 ## Usage
 
