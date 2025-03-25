@@ -17,9 +17,9 @@ def run_airflow_cmd(cmd):
 
 def setup_openweathermap_connection():
     """Create the OpenWeatherMap API connection."""
-    api_key = os.environ.get('OPENWEATHER_API_KEY', '')
+    api_key = os.environ.get("OPENWEATHER_API_KEY", "")
 
-    if not api_key or api_key == 'your_api_key_here':
+    if not api_key or api_key == "your_api_key_here":
         print("Warning: OPENWEATHER_API_KEY not set or using placeholder value")
         print("Set it in your .env file before running this script")
         return False
@@ -28,7 +28,7 @@ def setup_openweathermap_connection():
     subprocess.run(
         "airflow connections delete openweathermap_api 2>/dev/null",
         shell=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Create HTTP connection with API key in extra field
@@ -47,9 +47,9 @@ def setup_openweathermap_connection():
 
 def setup_postgres_connection():
     """Create the PostgreSQL connection for weather data."""
-    db_name = os.environ.get('WEATHER_DB_NAME', 'weather_data')
-    db_user = os.environ.get('WEATHER_DB_USER', 'weather_user')
-    db_password = os.environ.get('WEATHER_DB_PASSWORD', '')
+    db_name = os.environ.get("WEATHER_DB_NAME", "weather_data")
+    db_user = os.environ.get("WEATHER_DB_USER", "weather_user")
+    db_password = os.environ.get("WEATHER_DB_PASSWORD", "")
 
     if not db_password:
         print("Warning: WEATHER_DB_PASSWORD not set")
@@ -60,18 +60,18 @@ def setup_postgres_connection():
     subprocess.run(
         "airflow connections delete weather_postgres 2>/dev/null",
         shell=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Create Postgres connection for weather data
-    cmd = f'''airflow connections add weather_postgres \
+    cmd = f"""airflow connections add weather_postgres \
         --conn-type postgres \
         --conn-host postgres \
         --conn-port 5432 \
         --conn-schema {db_name} \
         --conn-login {db_user} \
         --conn-password {db_password}
-    '''
+    """
 
     if run_airflow_cmd(cmd):
         print("Created connection: weather_postgres")
@@ -82,8 +82,8 @@ def setup_postgres_connection():
 def setup_variables():
     """Create Airflow variables for weather API configuration."""
     variables = {
-        'weather_api_base_url': 'https://api.openweathermap.org/data/2.5',
-        'weather_api_rate_limit': '60',
+        "weather_api_base_url": "https://api.openweathermap.org/data/2.5",
+        "weather_api_rate_limit": "60",
     }
 
     success = True
@@ -116,5 +116,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -7,7 +7,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 logger = logging.getLogger(__name__)
 
-POSTGRES_CONN_ID = 'weather_postgres'
+POSTGRES_CONN_ID = "weather_postgres"
 TEMP_CHANGE_THRESHOLD = 10.0
 STALE_DATA_HOURS = 2
 
@@ -47,12 +47,12 @@ def detect_temperature_anomalies():
     for row in results:
         city, country, obs_time, temp, prev_temp, change = row
         anomaly = {
-            'type': 'temperature_spike',
-            'location': f'{city}, {country}',
-            'observation_time': obs_time,
-            'current_temp': float(temp),
-            'previous_temp': float(prev_temp),
-            'change': float(change)
+            "type": "temperature_spike",
+            "location": f"{city}, {country}",
+            "observation_time": obs_time,
+            "current_temp": float(temp),
+            "previous_temp": float(prev_temp),
+            "change": float(change),
         }
         anomalies.append(anomaly)
         logger.warning(
@@ -89,10 +89,10 @@ def detect_missing_locations():
     for row in results:
         location_id, city, country, last_obs = row
         anomaly = {
-            'type': 'missing_data',
-            'location': f'{city}, {country}',
-            'location_id': location_id,
-            'last_observation': last_obs
+            "type": "missing_data",
+            "location": f"{city}, {country}",
+            "location_id": location_id,
+            "last_observation": last_obs,
         }
         anomalies.append(anomaly)
 
@@ -138,18 +138,18 @@ def detect_outliers():
         issues = []
 
         if temp is not None and (temp < -50 or temp > 60):
-            issues.append(f'temperature {temp}°C out of range')
+            issues.append(f"temperature {temp}°C out of range")
         if humidity is not None and (humidity < 0 or humidity > 100):
-            issues.append(f'humidity {humidity}% out of range')
+            issues.append(f"humidity {humidity}% out of range")
         if wind_speed is not None and (wind_speed < 0 or wind_speed > 150):
-            issues.append(f'wind speed {wind_speed} m/s out of range')
+            issues.append(f"wind speed {wind_speed} m/s out of range")
 
         if issues:
             anomaly = {
-                'type': 'outlier',
-                'location': f'{city}, {country}',
-                'observation_time': obs_time,
-                'issues': issues
+                "type": "outlier",
+                "location": f"{city}, {country}",
+                "observation_time": obs_time,
+                "issues": issues,
             }
             anomalies.append(anomaly)
             logger.warning(
@@ -168,18 +168,18 @@ def store_anomaly(anomaly_data):
         WHERE city_name = %s AND country_code = %s
     """
 
-    location_parts = anomaly_data['location'].split(', ')
+    location_parts = anomaly_data["location"].split(", ")
     if len(location_parts) == 2:
         city, country = location_parts
         result = hook.get_first(location_query, parameters=(city, country))
         location_id = result[0] if result else None
     else:
-        location_id = anomaly_data.get('location_id')
+        location_id = anomaly_data.get("location_id")
 
     severity_map = {
-        'temperature_spike': 'high',
-        'missing_data': 'medium',
-        'outlier': 'high'
+        "temperature_spike": "high",
+        "missing_data": "medium",
+        "outlier": "high",
     }
 
     sql = """
@@ -189,15 +189,16 @@ def store_anomaly(anomaly_data):
     """
 
     import json
+
     metadata = json.dumps(anomaly_data)
 
     params = (
         location_id,
-        anomaly_data['type'],
-        anomaly_data.get('observation_time'),
-        severity_map.get(anomaly_data['type'], 'medium'),
+        anomaly_data["type"],
+        anomaly_data.get("observation_time"),
+        severity_map.get(anomaly_data["type"], "medium"),
         str(anomaly_data),
-        metadata
+        metadata,
     )
 
     hook.run(sql, parameters=params)
@@ -205,31 +206,27 @@ def store_anomaly(anomaly_data):
 
 def check_anomalies(**context):
     """Run all anomaly detection checks and aggregate results."""
-    all_anomalies = {
-        'temperature_spikes': [],
-        'missing_data': [],
-        'outliers': []
-    }
+    all_anomalies = {"temperature_spikes": [], "missing_data": [], "outliers": []}
 
     logger.info("Running anomaly detection checks...")
 
     try:
         temp_anomalies = detect_temperature_anomalies()
-        all_anomalies['temperature_spikes'] = temp_anomalies
+        all_anomalies["temperature_spikes"] = temp_anomalies
         logger.info(f"Found {len(temp_anomalies)} temperature anomalies")
     except Exception as e:
         logger.error(f"Error detecting temperature anomalies: {e}")
 
     try:
         missing = detect_missing_locations()
-        all_anomalies['missing_data'] = missing
+        all_anomalies["missing_data"] = missing
         logger.info(f"Found {len(missing)} locations with missing/stale data")
     except Exception as e:
         logger.error(f"Error detecting missing data: {e}")
 
     try:
         outliers = detect_outliers()
-        all_anomalies['outliers'] = outliers
+        all_anomalies["outliers"] = outliers
         logger.info(f"Found {len(outliers)} outlier values")
     except Exception as e:
         logger.error(f"Error detecting outliers: {e}")
@@ -249,7 +246,7 @@ def check_anomalies(**context):
         except Exception as e:
             logger.error(f"Error storing anomalies: {e}")
 
-    ti = context['ti']
-    ti.xcom_push(key='anomalies', value=all_anomalies)
+    ti = context["ti"]
+    ti.xcom_push(key="anomalies", value=all_anomalies)
 
     return all_anomalies

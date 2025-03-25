@@ -16,13 +16,13 @@ from tasks.locations import load_locations_from_config
 
 logger = logging.getLogger(__name__)
 
-SQL_FILE_PATH = '/opt/airflow/sql/schema.sql'
-POSTGRES_CONN_ID = 'weather_postgres'
+SQL_FILE_PATH = "/opt/airflow/sql/schema.sql"
+POSTGRES_CONN_ID = "weather_postgres"
 
 
 def create_schema():
     """Execute schema.sql to create database tables."""
-    with open(SQL_FILE_PATH, 'r') as f:
+    with open(SQL_FILE_PATH, "r") as f:
         sql = f.read()
 
     hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
@@ -46,33 +46,29 @@ def populate_locations():
     """
 
     for loc in locations:
-        hook.run(insert_sql, parameters=(
-            loc['city'],
-            loc['country'],
-            loc['lat'],
-            loc['lon']
-        ))
+        hook.run(
+            insert_sql, parameters=(loc["city"], loc["country"], loc["lat"], loc["lon"])
+        )
         logger.info(f"Processed location: {loc['city']}, {loc['country']}")
 
     logger.info(f"Populated {len(locations)} locations")
 
 
 with DAG(
-    dag_id='db_init',
-    description='Initialize database schema and populate locations',
+    dag_id="db_init",
+    description="Initialize database schema and populate locations",
     schedule=None,
     start_date=datetime(2025, 3, 3),
     catchup=False,
-    tags=['setup', 'database'],
+    tags=["setup", "database"],
 ) as dag:
-
     create_schema_task = PythonOperator(
-        task_id='create_schema',
+        task_id="create_schema",
         python_callable=create_schema,
     )
 
     populate_locations_task = PythonOperator(
-        task_id='populate_locations',
+        task_id="populate_locations",
         python_callable=populate_locations,
     )
 

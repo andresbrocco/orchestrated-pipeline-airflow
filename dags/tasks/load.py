@@ -6,7 +6,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 logger = logging.getLogger(__name__)
 
-POSTGRES_CONN_ID = 'weather_postgres'
+POSTGRES_CONN_ID = "weather_postgres"
 
 
 def load_observation(location_id, observation_data):
@@ -37,21 +37,21 @@ def load_observation(location_id, observation_data):
 
     params = (
         location_id,
-        observation_data['observation_time'],
-        observation_data.get('temperature'),
-        observation_data.get('feels_like'),
-        observation_data.get('humidity'),
-        observation_data.get('pressure'),
-        observation_data.get('wind_speed'),
-        observation_data.get('wind_direction'),
-        observation_data.get('weather_condition'),
-        observation_data.get('weather_description'),
-        observation_data.get('cloudiness'),
-        observation_data.get('visibility')
+        observation_data["observation_time"],
+        observation_data.get("temperature"),
+        observation_data.get("feels_like"),
+        observation_data.get("humidity"),
+        observation_data.get("pressure"),
+        observation_data.get("wind_speed"),
+        observation_data.get("wind_direction"),
+        observation_data.get("weather_condition"),
+        observation_data.get("weather_description"),
+        observation_data.get("cloudiness"),
+        observation_data.get("visibility"),
     )
 
     hook.run(sql, parameters=params)
-    logger.info(f'Loaded observation for location {location_id}')
+    logger.info(f"Loaded observation for location {location_id}")
 
 
 def load_forecasts(location_id, forecasts):
@@ -89,19 +89,19 @@ def load_forecasts(location_id, forecasts):
     for forecast in forecasts:
         row = (
             location_id,
-            forecast['forecast_time'],
-            forecast['predicted_for'],
-            forecast.get('temperature'),
-            forecast.get('feels_like'),
-            forecast.get('humidity'),
-            forecast.get('pressure'),
-            forecast.get('wind_speed'),
-            forecast.get('wind_direction'),
-            forecast.get('weather_condition'),
-            forecast.get('weather_description'),
-            forecast.get('cloudiness'),
-            forecast.get('visibility'),
-            forecast.get('precipitation_probability')
+            forecast["forecast_time"],
+            forecast["predicted_for"],
+            forecast.get("temperature"),
+            forecast.get("feels_like"),
+            forecast.get("humidity"),
+            forecast.get("pressure"),
+            forecast.get("wind_speed"),
+            forecast.get("wind_direction"),
+            forecast.get("weather_condition"),
+            forecast.get("weather_description"),
+            forecast.get("cloudiness"),
+            forecast.get("visibility"),
+            forecast.get("precipitation_probability"),
         )
         rows.append(row)
 
@@ -112,11 +112,11 @@ def load_forecasts(location_id, forecasts):
         for row in rows:
             cursor.execute(sql, row)
         conn.commit()
-        logger.info(f'Loaded {len(rows)} forecasts for location {location_id}')
+        logger.info(f"Loaded {len(rows)} forecasts for location {location_id}")
         return len(rows)
     except Exception as e:
         conn.rollback()
-        logger.error(f'Failed to load forecasts: {e}')
+        logger.error(f"Failed to load forecasts: {e}")
         raise
     finally:
         cursor.close()
@@ -124,17 +124,17 @@ def load_forecasts(location_id, forecasts):
 
 def load_weather_data(transformed_data):
     """Load complete transformed weather data for a location."""
-    location = transformed_data['location']
-    location_id = location['id']
+    location = transformed_data["location"]
+    location_id = location["id"]
 
-    loaded = {'observations': 0, 'forecasts': 0}
+    loaded = {"observations": 0, "forecasts": 0}
 
-    if transformed_data.get('current'):
-        load_observation(location_id, transformed_data['current'])
-        loaded['observations'] = 1
+    if transformed_data.get("current"):
+        load_observation(location_id, transformed_data["current"])
+        loaded["observations"] = 1
 
-    if transformed_data.get('forecasts'):
-        loaded['forecasts'] = load_forecasts(location_id, transformed_data['forecasts'])
+    if transformed_data.get("forecasts"):
+        loaded["forecasts"] = load_forecasts(location_id, transformed_data["forecasts"])
 
     logger.info(
         f"Loaded data for {location.get('city', 'Unknown')}: "

@@ -5,8 +5,8 @@ from pathlib import Path
 
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
-CONFIG_PATH = Path('/opt/airflow/config/locations.json')
-POSTGRES_CONN_ID = 'weather_postgres'
+CONFIG_PATH = Path("/opt/airflow/config/locations.json")
+POSTGRES_CONN_ID = "weather_postgres"
 
 
 def load_locations_from_config():
@@ -32,11 +32,11 @@ def get_locations_from_db():
 
     return [
         {
-            'id': row[0],
-            'city': row[1],
-            'country': row[2],
-            'lat': float(row[3]),
-            'lon': float(row[4])
+            "id": row[0],
+            "city": row[1],
+            "country": row[2],
+            "lat": float(row[3]),
+            "lon": float(row[4]),
         }
         for row in records
     ]
@@ -58,11 +58,11 @@ def get_location_by_id(location_id):
         return None
 
     return {
-        'id': record[0],
-        'city': record[1],
-        'country': record[2],
-        'lat': float(record[3]),
-        'lon': float(record[4])
+        "id": record[0],
+        "city": record[1],
+        "country": record[2],
+        "lat": float(record[3]),
+        "lon": float(record[4]),
     }
 
 
@@ -89,17 +89,14 @@ def get_location_by_city(city_name, country_code=None):
         return None
 
     return {
-        'id': record[0],
-        'city': record[1],
-        'country': record[2],
-        'lat': float(record[3]),
-        'lon': float(record[4])
+        "id": record[0],
+        "city": record[1],
+        "country": record[2],
+        "lat": float(record[3]),
+        "lon": float(record[4]),
     }
 
 
 def get_api_params(location):
     """Format location data for OpenWeatherMap API call."""
-    return {
-        'lat': location['lat'],
-        'lon': location['lon']
-    }
+    return {"lat": location["lat"], "lon": location["lon"]}
